@@ -1,42 +1,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "Token.sol";
+import "./Token.sol";
 
-contract Staking {
-    Token public token;
-    mapping(address => uint) public stakes;
-    mapping(address => uint) public rewards;
-    uint public totalStakes;
-    uint public rewardPerStake;
+// Создаем контракт для стейкинга токена
+contract StakingContract {
+    MyToken private token;
+    mapping(address => uint256) private stakedBalances;
+    uint256 private totalStakedBalance;
+    event Staked(address indexed staker, uint256 amount);
+    event Withdrawn(address indexed staker, uint256 amount);
 
-    constructor(Token _token) {
+    constructor(MyToken _token) {
         token = _token;
-        rewardPerStake = 25; // Здесь устанавливаем количество токенов награды, которые будут получать пользователи за стейкинг в 1 токен
     }
 
-    function stake(uint _amount) public {
-        require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
-        require(token.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+    // Функция для стейкинга токенов
+    function stake(uint256 amount) external {
+        require(amount > 0, "Amount should be greater than 0");
+        require(token.balanceOf(msg.sender) >= amount, "Insufficient balance");
 
-        stakes[msg.sender] += _amount;
-        totalStakes += _amount;
+        token.transferFrom(msg.sender, address(this), amount);
+        stakedBalances[msg.sender] += amount;
+        totalStakedBalance += amount;
+
+        emit Staked(msg.sender, amount);
     }
 
-    function unstake(uint _amount) public {
-        require(stakes[msg.sender] >= _amount, "Insufficient stake");
+    // Функция для снятия стейкинга токенов
+    function withdraw(uint256 amount) external {
+        require(amount > 0, "Amount should be greater than 0");
+        require(stakedBalances[msg.sender] >= amount, "Insufficient staked balance");
 
-        uint reward = calculateReward(msg.sender);
+        token.transfer(msg.sender, amount);
+        stakedBalances[msg.sender] -= amount;
+        totalStakedBalance -= amount;
 
-        stakes[msg.sender] -= _amount;
-        totalStakes -= _amount;
-
-        require(token.transfer(msg.sender, _amount + reward), "Transfer failed");
-
-        rewards[msg.sender] = reward;
+        emit Withdrawn(msg.sender, amount);
     }
 
-    function calculateReward(address _addr) public view returns (uint) {
-        return stakes[_addr] * rewardPerStake - rewards[_addr];
+    // Функция для получения общего количества застейканных токенов
+    function getTotalStakedBalance() external view returns (uint256) {
+        return totalStakedBalance;
+    }
+
+    // Функция для получения количества застейканных токенов указанного адреса
+    function getStakedBalance(address account) external view returns (uint256) {
+        return stakedBalances[account];
     }
 }
+
+
