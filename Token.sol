@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // Создаем контракт для нашего токена
 contract MyToken is ERC20, Ownable {
     // Конструктор для создания токена
-    constructor(uint256 initialSupply) ERC20("Eduverse", "EDV") {
-        _mint(msg.sender, initialSupply);
+    constructor() ERC20("Eduverse", "EDV") {
+        _mint(msg.sender, 1000000 * 10**18);
     }
 
     // Функция для добавления токенов на баланс указанного адреса
